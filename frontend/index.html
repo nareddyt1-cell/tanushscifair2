@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Enzyme vs. Damaged Sequence Impact Analysis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f6f7f9;
+      padding: 2rem;
+    }
+    textarea {
+      width: 100%;
+      height: 140px;
+      font-family: monospace;
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.6rem 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .box {
+      background: white;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+    }
+    .highlight {
+      background: #ff4d4d;
+      color: white;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Enzyme vs. Damaged Sequence Impact Analysis</h1>
+
+  <h3>Reference (Functioning) Sequence</h3>
+  <textarea id="wt"></textarea>
+
+  <h3>Damaged Sequence</h3>
+  <textarea id="damaged"></textarea>
+
+  <button onclick="analyze()">Preview Functional Annotation</button>
+
+  <div id="output"></div>
+
+  <script>
+    async function analyze() {
+      const wt = document.getElementById("wt").value.trim();
+      const damaged = document.getElementById("damaged").value.trim();
+      const output = document.getElementById("output");
+
+      output.innerHTML = "<p>Loading analysis…</p>";
+
+      const res = await fetch("https://YOUR-WORKER-NAME.workers.dev", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reference_sequence: wt,
+          damaged_sequence: damaged
+        })
+      });
+
+      const data = await res.json();
+
+      output.innerHTML = `
+        <div class="box">
+          <strong>UniProt Accession:</strong> ${data.uniprot_accession}<br/>
+          <strong>AlphaFold:</strong>
+          <a href="${data.alphafold_url}" target="_blank">${data.alphafold_id}</a>
+        </div>
+
+        <div class="box">
+          <strong>Domains</strong>
+          <ul>
+            ${data.domains.map(d =>
+              `<li>${d.name} (${d.start}-${d.end})</li>`
+            ).join("")}
+          </ul>
+        </div>
+
+        <div class="box">
+          <strong>Biological Consequence</strong>
+          <p>${data.analysis.consequence}</p>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
